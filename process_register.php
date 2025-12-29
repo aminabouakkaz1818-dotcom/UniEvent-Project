@@ -1,7 +1,3 @@
-<think>
-First, the user wants the full code for "process_register.php" rewritten with new validation logic.
-
-</think>```php
 <?php
 // Include the database connection
 include 'db_connect.php';
@@ -47,6 +43,19 @@ if ($role === 'Student') {
     exit;
 }
 
+// Check for duplicates: Ensure the same email isn't already registered for this event
+try {
+    $stmt = $pdo->prepare("SELECT id FROM registrations WHERE event_id = ? AND student_email = ?");
+    $stmt->execute([$event_id, $student_email]);
+    if ($stmt->fetch()) {
+        echo json_encode(['status' => 'error', 'message' => 'You are already registered for this event.']);
+        exit;
+    }
+} catch (PDOException $e) {
+    echo json_encode(['status' => 'error', 'message' => 'Database error during duplicate check: ' . $e->getMessage()]);
+    exit;
+}
+
 try {
     // Insert into registrations table
     $stmt = $pdo->prepare("INSERT INTO registrations (event_id, student_name, student_email, role, university_id) VALUES (?, ?, ?, ?, ?)");
@@ -59,4 +68,3 @@ try {
     echo json_encode(['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
 }
 ?>
-```
